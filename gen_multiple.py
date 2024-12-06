@@ -55,10 +55,11 @@ def main():
         base_url=config.get("generate", "base_url"),
     )
     problems = load_datasets(config.get("generate", "language"))
-    flowcharts = get_flowcharts(config.get("generate", "flowchart"))
+    flowcharts = get_flowcharts(f"plantuml-{config.get('generate', 'model')}.jsonl")
 
     output_file = f"{config.get('generate','model')}-{config.get('generate','language')}-{'optimize' if config.getboolean('generate','optimize') else 'baseline'}.jsonl"
     data = []
+    print(f"Generating {config.get('generate','language')} completions...")
     for problem in tqdm(problems):
         flowchart = (
             flowcharts[get_humaneval_task_id(problem["name"])]

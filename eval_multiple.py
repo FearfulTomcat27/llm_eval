@@ -51,9 +51,9 @@ def extract_java_code(text, entry_point):
     return textwrap.indent(text, " " * 4)
 
 
-def write_jsonl_gz(task, config):
+def write_jsonl_gz(task, output_folder):
     with gzip.open(
-        os.path.join(config.get("eval", "output_folder"), f"{task['name']}.json.gz"),
+        os.path.join(output_folder, f"{task['name']}.json.gz"),
         "wb",
     ) as fp:
         fp.write((json.dumps(task) + "\n").encode("utf-8"))
@@ -86,15 +86,21 @@ def get_extractor(language):
 
 def main():
     config = get_config()
-    os.makedirs(config.get("eval", "output_folder"), exist_ok=True)
-    extractor = get_extractor(config.get("eval", "language"))
-    tasks = read_jsonl(config.get("eval", "input_file"))
+    input_file = f"{config.get('generate','model')}-{config.get('generate','language')}-{'optimize' if config.getboolean('generate','optimize') else 'baseline'}.jsonl"
+    output_folder = os.path.join(
+        "tutorial",
+        f"{config.get('generate','model')}-{config.get('generate','language')}-{'optimize' if config.getboolean('generate','optimize') else 'baseline'}",
+    )
+    os.makedirs(output_folder, exist_ok=True)
+    extractor = get_extractor(config.get("generate", "language"))
+    tasks = read_jsonl(input_file)
+    print("Extracting code...")
     for task in tqdm(tasks):
         completions = []
         for completion in task["completions"]:
             completions.append(extractor(completion, task["name"]))
         task["completions"] = completions
-        write_jsonl_gz(task, config)
+        write_jsonl_gz(task, output_folder)
 
 
 if __name__ == "__main__":
